@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "LTGHY3XF9S.com.datzuo.youge.ios",
+        "paths": [ "/auth/callback" ]
+      }
+    ]
+  }
+}

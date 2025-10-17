@@ -3,109 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>正在完成登入...</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>正在返回 App...</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f8f9fa; color: #495057; text-align: center; }
     .container { max-width: 400px; padding: 20px; }
     h1 { font-size: 24px; margin-bottom: 20px; }
     p { font-size: 16px; line-height: 1.6; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #5A67D8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .cta-button { display: none; margin-top: 30px; padding: 15px 35px; background-color: #5A67D8; color: #ffffff; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: bold; }
+    .cta-button { display: inline-block; margin-top: 30px; padding: 15px 35px; background-color: #5A67D8; color: #ffffff; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: bold; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="loading">
-      <div class="spinner"></div>
-      <h1>正在驗證您的身份...</h1>
-      <p>請稍候，我們正在安全地將您登入。</p>
-    </div>
-    <div id="message" style="display: none;">
-      <h1 id="message-title"></h1>
-      <p id="message-body"></p>
-      <a id="open-app-button" href="com.hiyouge.uger://auth/callback" class="cta-button">返回「憂隔世界」App</a>
-    </div>
+    <h1>即將返回「憂隔世界」</h1>
+    <p>如果 App 沒有自動打開，請點擊下方的按鈕手動返回。</p>
+    <a id="open-app-button" href="#" class="cta-button">手動返回 App</a>
   </div>
 
   <script>
-    // ⚠️ 請務必將下面這兩行替換為您真實的 Supabase 金鑰
-    const supabaseUrl = 'https://oqrauzlmirxweqqyhdnz.supabase.co';
-    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xcmF1emxtaXJ4d2VxcXloZG56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMTk4NzcsImV4cCI6MjA1Nzg5NTg3N30.CZPermtIea44ixKOP2iXrGsiQ6ejCiVLL9SyfLvsSBM';
+    // ✅ **核心修正：不再進行任何 Supabase 認證，只做一件事：傳遞鑰匙！**
+    document.addEventListener("DOMContentLoaded", function() {
+      // 1. 從當前網址的 hash 中獲取完整的登入權杖
+      const hash = window.location.hash;
 
-    const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
-    
-    // 獲取頁面元素
-    const loadingDiv = document.getElementById('loading');
-    const messageDiv = document.getElementById('message');
-    const messageTitle = document.getElementById('message-title');
-    const messageBody = document.getElementById('message-body');
-    const openAppButton = document.getElementById('open-app-button');
+      if (hash) {
+        // 2. 建立一個帶有完整登入權杖的 Custom URL Scheme 連結
+        // 格式: com.hiyouge.uger://auth/callback#access_token=...
+        const appLink = 'com.hiyouge.uger://auth/callback' + hash;
 
-    let hasHandledSignIn = false;
+        // 3. 將這個連結設定到按鈕上，以防自動跳轉失敗
+        const button = document.getElementById('open-app-button');
+        button.href = appLink;
 
-    // 顯示成功或失敗訊息的統一函式
-    function showMessage(title, body, showButton) {
-      if (hasHandledSignIn) return; // 防止重複觸發
-      hasHandledSignIn = true;
-
-      loadingDiv.style.display = 'none';
-      messageDiv.style.display = 'block';
-      messageTitle.innerText = title;
-      messageBody.innerText = body;
-      if (showButton) {
-        openAppButton.style.display = 'inline-block';
-      }
-    }
-
-    // ✅ **核心修正 1：設定「時刻警惕」的門衛**
-    // 這個監聽器會捕捉任何後續的狀態變化，也可能捕捉到初始的登入事件
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        showMessage(
-          '✅ 驗證成功！',
-          '您現在可以點擊下方的按鈕，安全地返回「憂隔世界」App。',
-          true
-        );
+        // 4. 嘗試自動跳轉（這在某些瀏覽器中可能被阻止，但值得一試）
+        window.location.replace(appLink);
+        
+      } else {
+        // 如果 URL 中沒有 hash，顯示錯誤
+        document.querySelector('h1').innerText = '❌ 連結無效';
+        document.querySelector('p').innerText = '這個登入連結不完整，請回到 App 中重新嘗試。';
       }
     });
-
-    // ✅ **核心修正 2：設定「主動檢查」的備用門衛**
-    // 這個計時器會在 500 毫秒後啟動，確保我們不會錯過任何事
-    setTimeout(async () => {
-      if (hasHandledSignIn) return; // 如果已經處理過了，就不再執行
-
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          // 如果此時 session 存在，代表登入已成功，但事件可能被錯過了
-          console.log("Fallback check: Session found!");
-          showMessage(
-            '✅ 驗證成功！',
-            '您現在可以點擊下方的按鈕，安全地返回「憂隔世界」App。',
-            true
-          );
-        } else if (window.location.hash.includes('error=')) {
-          // 如果沒有 session 且 URL 中有錯誤
-          showMessage(
-            '❌ 驗證失敗',
-            '這個驗證連結可能已失效或過期，請回到 App 中重新嘗試一次。',
-            false
-          );
-        } else {
-          // 如果 500 毫秒後依然沒有 session 也沒有錯誤，可能網路較慢或連結有問題
-          showMessage(
-            '🤔 驗證超時',
-            '請檢查您的網路連線，或回到 App 中重新嘗試一次。',
-            false
-          );
-        }
-      } catch (e) {
-        showMessage('❌ 發生錯誤', e.message, false);
-      }
-    }, 500); // 500 毫秒的延遲足以應對絕大多數情況
-
   </script>
 </body>
 </html>

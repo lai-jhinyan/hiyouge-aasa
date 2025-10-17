@@ -3,19 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>正在完成登入...</title>
+  <title>正在驗證您的身份...</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f8f9fa; color: #495057; text-align: center; }
     .container { max-width: 400px; padding: 20px; }
     h1 { font-size: 24px; margin-bottom: 20px; }
     p { font-size: 16px; line-height: 1.6; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #5A67D8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>正在完成登入...</h1>
-    <p>如果您的 App 沒有自動打開，請確認您已在手機上安裝「憂隔世界」並重試。</p>
-    <p>如果您是在電腦上打開此連結，請回到您的手機上操作。</p>
+    <div id="loading">
+      <div class="spinner"></div>
+      <h1>正在驗證您的身份...</h1>
+      <p>請稍候，我們正在安全地將您登入。</p>
+    </div>
+    <div id="message" style="display: none;">
+      <h1 id="message-title"></h1>
+      <p id="message-body"></p>
+    </div>
   </div>
+
+  <script>
+    const supabaseUrl = 'YOUR_SUPABASE_URL'; // ⚠️ 請替換成您的 Supabase URL
+    const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY'; // ⚠️ 請替換成您的 Supabase Anon Key
+
+    const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+    // 監聽認證狀態的變化
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        // 一旦在瀏覽器中成功登入，就完成了！
+        // 使用者現在可以手動切換回 App，App 會自動識別到登入狀態。
+        document.getElementById('loading').style.display = 'none';
+        const messageDiv = document.getElementById('message');
+        messageDiv.style.display = 'block';
+        document.getElementById('message-title').innerText = '✅ 驗證成功！';
+        document.getElementById('message-body').innerText = '您現在可以安全地關閉此頁面，並返回「憂隔世界」App。';
+      }
+    });
+
+    // 頁面載入時，檢查 URL 中是否有錯誤
+    const hash = window.location.hash;
+    if (hash.includes('error=')) {
+       document.getElementById('loading').style.display = 'none';
+       const messageDiv = document.getElementById('message');
+       messageDiv.style.display = 'block';
+       document.getElementById('message-title').innerText = '❌ 驗證失敗';
+       document.getElementById('message-body').innerText = '這個驗證連結可能已失效或過期，請回到 App 中重新嘗試一次。';
+    }
+  </script>
 </body>
 </html>

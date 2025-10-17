@@ -12,18 +12,20 @@
     p { font-size: 16px; line-height: 1.6; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #5A67D8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .cta-button { display: none; margin-top: 30px; padding: 15px 35px; background-color: #5A67D8; color: #ffffff; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: bold; }
   </style>
 </head>
 <body>
   <div class="container">
     <div id="loading">
       <div class="spinner"></div>
-      <h1>正在完成登入...</h1>
-      <p>即將返回「憂隔世界」App。</p>
+      <h1>正在驗證您的身份...</h1>
+      <p>請稍候，我們正在安全地將您登入。</p>
     </div>
     <div id="message" style="display: none;">
       <h1 id="message-title"></h1>
       <p id="message-body"></p>
+      <a id="open-app-button" href="com.hiyouge.uger://auth/callback" class="cta-button">返回「憂隔世界」App</a>
     </div>
   </div>
 
@@ -39,30 +41,24 @@
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && !signedIn) {
         signedIn = true;
-        // 一旦在瀏覽器中成功登入，就完成了！
-        // 使用者現在可以手動切換回 App，App 會自動識別到登入狀態。
+        // ✅ **核心修正：不再自動跳轉，而是顯示成功訊息和按鈕**
         document.getElementById('loading').style.display = 'none';
         const messageDiv = document.getElementById('message');
         messageDiv.style.display = 'block';
         document.getElementById('message-title').innerText = '✅ 驗證成功！';
-        document.getElementById('message-body').innerText = '您現在可以安全地關閉此頁面，並返回「憂隔世界」App。';
+        document.getElementById('message-body').innerText = '您現在可以點擊下方的按鈕，安全地返回「憂隔世界」App。';
+        document.getElementById('open-app-button').style.display = 'inline-block';
       }
     });
 
-    // ✅ **核心修正：在頁面載入時，立即嘗試用 Custom URL Scheme 喚醒 App**
-    // 這一步會強制打開 App (如果已安裝)
-    window.location.href = 'com.hiyouge.uger://auth/callback';
-
     // 檢查 URL 中是否有錯誤 (作為備用)
-    setTimeout(() => {
-        if (window.location.hash.includes('error=')) {
-            document.getElementById('loading').style.display = 'none';
-            const messageDiv = document.getElementById('message');
-            messageDiv.style.display = 'block';
-            document.getElementById('message-title').innerText = '❌ 驗證失敗';
-            document.getElementById('message-body').innerText = '這個驗證連結可能已失效或過期，請回到 App 中重新嘗試一次。';
-        }
-    }, 1000); // 延遲1秒執行，給 redirect 一些時間
+    if (window.location.hash.includes('error=')) {
+        document.getElementById('loading').style.display = 'none';
+        const messageDiv = document.getElementById('message');
+        messageDiv.style.display = 'block';
+        document.getElementById('message-title').innerText = '❌ 驗證失敗';
+        document.getElementById('message-body').innerText = '這個驗證連結可能已失效或過期，請回到 App 中重新嘗試一次。';
+    }
   </script>
 </body>
 </html>

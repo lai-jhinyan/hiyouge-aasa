@@ -35,30 +35,77 @@
     const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xcmF1emxtaXJ4d2VxcXloZG56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMTk4NzcsImV4cCI6MjA1Nzg5NTg3N30.CZPermtIea44ixKOP2iXrGsiQ6ejCiVLL9SyfLvsSBM';
 
     const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
-    let signedIn = false;
+    
+    // 獲取頁面元素
+    const loadingDiv = document.getElementById('loading');
+    const messageDiv = document.getElementById('message');
+    const messageTitle = document.getElementById('message-title');
+    const messageBody = document.getElementById('message-body');
+    const openAppButton = document.getElementById('open-app-button');
 
-    // 監聽認證狀態的變化
+    let hasHandledSignIn = false;
+
+    // 顯示成功或失敗訊息的統一函式
+    function showMessage(title, body, showButton) {
+      if (hasHandledSignIn) return; // 防止重複觸發
+      hasHandledSignIn = true;
+
+      loadingDiv.style.display = 'none';
+      messageDiv.style.display = 'block';
+      messageTitle.innerText = title;
+      messageBody.innerText = body;
+      if (showButton) {
+        openAppButton.style.display = 'inline-block';
+      }
+    }
+
+    // ✅ **核心修正 1：設定「時刻警惕」的門衛**
+    // 這個監聽器會捕捉任何後續的狀態變化，也可能捕捉到初始的登入事件
     supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && !signedIn) {
-        signedIn = true;
-        // ✅ **核心修正：不再自動跳轉，而是顯示成功訊息和按鈕**
-        document.getElementById('loading').style.display = 'none';
-        const messageDiv = document.getElementById('message');
-        messageDiv.style.display = 'block';
-        document.getElementById('message-title').innerText = '✅ 驗證成功！';
-        document.getElementById('message-body').innerText = '您現在可以點擊下方的按鈕，安全地返回「憂隔世界」App。';
-        document.getElementById('open-app-button').style.display = 'inline-block';
+      if (event === 'SIGNED_IN') {
+        showMessage(
+          '✅ 驗證成功！',
+          '您現在可以點擊下方的按鈕，安全地返回「憂隔世界」App。',
+          true
+        );
       }
     });
 
-    // 檢查 URL 中是否有錯誤 (作為備用)
-    if (window.location.hash.includes('error=')) {
-        document.getElementById('loading').style.display = 'none';
-        const messageDiv = document.getElementById('message');
-        messageDiv.style.display = 'block';
-        document.getElementById('message-title').innerText = '❌ 驗證失敗';
-        document.getElementById('message-body').innerText = '這個驗證連結可能已失效或過期，請回到 App 中重新嘗試一次。';
-    }
+    // ✅ **核心修正 2：設定「主動檢查」的備用門衛**
+    // 這個計時器會在 500 毫秒後啟動，確保我們不會錯過任何事
+    setTimeout(async () => {
+      if (hasHandledSignIn) return; // 如果已經處理過了，就不再執行
+
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          // 如果此時 session 存在，代表登入已成功，但事件可能被錯過了
+          console.log("Fallback check: Session found!");
+          showMessage(
+            '✅ 驗證成功！',
+            '您現在可以點擊下方的按鈕，安全地返回「憂隔世界」App。',
+            true
+          );
+        } else if (window.location.hash.includes('error=')) {
+          // 如果沒有 session 且 URL 中有錯誤
+          showMessage(
+            '❌ 驗證失敗',
+            '這個驗證連結可能已失效或過期，請回到 App 中重新嘗試一次。',
+            false
+          );
+        } else {
+          // 如果 500 毫秒後依然沒有 session 也沒有錯誤，可能網路較慢或連結有問題
+          showMessage(
+            '🤔 驗證超時',
+            '請檢查您的網路連線，或回到 App 中重新嘗試一次。',
+            false
+          );
+        }
+      } catch (e) {
+        showMessage('❌ 發生錯誤', e.message, false);
+      }
+    }, 500); // 500 毫秒的延遲足以應對絕大多數情況
+
   </script>
 </body>
 </html>

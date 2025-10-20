@@ -3,7 +3,9 @@
   "target": {
     "namespace": "android_app",
     "package_name": "com.datzuo.youge.android",
-    "sha256_cert_fingerprints":
-    ["66:39:9F:95:9C:BC:A6:C4:5B:56:64:50:B5:CE:D6:9E:17:15:AC:EC:A2:C5:B8:A8:99:F4:9B:D6:BC:E9:71:1F"]
+    "sha256_cert_fingerprints": [
+      "12:3D:9A:43:FC:8D:35:30:59:EC:57:8B:13:C9:4A:4A:BB:BB:52:89:3B:A5:41:C0:F9:48:5B:26:24:C6:17:42",
+      "66:39:9F:95:9C:BC:A6:C4:5B:56:64:50:B5:CE:D6:9E:17:15:AC:EC:A2:C5:B8:A8:99:F4:9B:D6:BC:E9:71:1F"
+    ]
   }
 }]
